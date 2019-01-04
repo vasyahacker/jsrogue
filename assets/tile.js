@@ -31,41 +31,41 @@ Game.Tile.floorTile = new Game.Tile({
     character: '.',
     walkable: true,
     blocksLight: false,
-    description: 'A cave floor'
+    description: 'Пол пещеры'
 });
 Game.Tile.wallTile = new Game.Tile({
     character: '#',
     foreground: 'goldenrod',
     diggable: true,
-    description: 'A cave wall'
+    description: 'Стена пещеры'
 });
 Game.Tile.stairsUpTile = new Game.Tile({
     character: '<',
     foreground: 'white',
     walkable: true,
     blocksLight: false,
-    description: 'A rock staircase leading upwards'
+    description: 'Каменная лестница ведущая наверх'
 });
 Game.Tile.stairsDownTile = new Game.Tile({
     character: '>',
     foreground: 'white',
     walkable: true,
     blocksLight: false,
-    description: 'A rock staircase leading downwards'
+    description: 'Каменная лестница ведущая вниз'
 });
 Game.Tile.holeToCavernTile = new Game.Tile({
     character: 'O',
     foreground: 'white',
     walkable: true,
     blocksLight: false,
-    description: 'A great dark hole in the ground'
+    description: 'Большая черная дыра в земле'
 });
 Game.Tile.waterTile = new Game.Tile({
     character: '~',
     foreground: 'blue',
     walkable: false,
     blocksLight: false,
-    description: 'Murky blue water'
+    description: 'Мутная голубая вода'
 });
 
 // Helper function

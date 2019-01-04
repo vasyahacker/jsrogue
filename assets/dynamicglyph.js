@@ -79,11 +79,11 @@ Game.DynamicGlyph.prototype.describeA = function(capitalize) {
     // If word starts by a vowel, use an, else use a. Note that this is not perfect.
     var prefix = 'aeiou'.indexOf(firstLetter) >= 0 ? 1 : 0;
 
-    return prefixes[prefix] + ' ' + string;
+    return /*prefixes[prefix] + ' ' +*/ string;
 };
 Game.DynamicGlyph.prototype.describeThe = function(capitalize) {
     var prefix = capitalize ? 'The' : 'the';
-    return prefix + ' ' + this.describe();
+    return /*prefix + ' ' + */ this.describe();
 };
 Game.DynamicGlyph.prototype.raiseEvent = function(event) {
     // Make sure we have at least one listener, or else exit

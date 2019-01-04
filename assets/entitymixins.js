@@ -5,27 +5,45 @@ Game.EntityMixins = {};
 Game.EntityMixins.PlayerActor = {
     name: 'PlayerActor',
     groupName: 'Actor',
+    moveTo: [],
     act: function() {
         if (this._acting) {
             return;
         }
         this._acting = true;
-        this.addTurnHunger();
         // Detect if the game is over
         if (!this.isAlive()) {
-            Game.Screen.playScreen.setGameEnded(true);
+            //Game.Screen.playScreen.setGameEnded(true);
             // Send a last message to the player
-            Game.sendMessage(this, 'Press [Enter] to continue!');
+            //Game.sendMessage(this, 'Нажмите [Enter] для продолжения!');
+            this.getMap().removeEntity(this);
+            this.setHp(10);
+            this.getMap().addEntityAtRandomPosition(this, 0);
+            this.rebirth();
+            Game.sendMessage(this, 'Вы возродились!');
+            this._acting = false;
+            return;
+        }
+        if(this.moveTo.length == 4 ){
+            this.tryMove(this.moveTo[0], this.moveTo[1],
+                this.moveTo[2], this.moveTo[3]);
+            Game.getAudio().play("step");
+
+            this.moveTo = [];
+            this.addTurnHunger();
         }
         // Re-render the screen
         Game.refresh();
         // Lock the engine and wait asynchronously
         // for the player to press a key.
-        this.getMap().getEngine().lock();
+    //this.getMap().getEngine().lock();
         // Clear the message queue
         this.clearMessages();
         this._acting = false;
-    }
+    },
+    move: function(x, y, z, m){
+        this.moveTo = [x,y,z,m];
+    },
 };
 
 Game.EntityMixins.FungusActor = {
@@ -59,7 +77,7 @@ Game.EntityMixins.FungusActor = {
                         // Send a message nearby!
                         Game.sendMessageNearby(this.getMap(),
                             entity.getX(), entity.getY(), entity.getZ(),
-                            'The fungus is spreading!');
+                            'Грибница разростается!');
                     }
                 }
             }
@@ -130,11 +148,20 @@ Game.EntityMixins.TaskActor = {
     wander: function() {
         // Flip coin to determine if moving by 1 in the positive or negative direction
         var moveOffset = (Math.round(Math.random()) === 1) ? 1 : -1;
+        var moveOffset2 = (Math.round(Math.random()) === 1) ? 1 : -1;
         // Flip coin to determine if moving in x direction or y direction
         if (Math.round(Math.random()) === 1) {
-            this.tryMove(this.getX() + moveOffset, this.getY(), this.getZ());
+            if (Math.round(Math.random()) === 1) {
+                this.tryMove(this.getX() + moveOffset, this.getY() + moveOffset2, this.getZ());
+            } else {
+                this.tryMove(this.getX() + moveOffset, this.getY(), this.getZ());
+            }
         } else {
-            this.tryMove(this.getX(), this.getY() + moveOffset, this.getZ());
+            if (Math.round(Math.random()) === 1) {
+                this.tryMove(this.getX(), this.getY() + moveOffset, this.getZ());
+            } else {
+                this.tryMove(this.getX() + moveOffset2, this.getY() + moveOffset, this.getZ());
+            }
         }
     }
 };
@@ -166,7 +193,7 @@ Game.EntityMixins.GiantZombieActor = Game.extend(Game.EntityMixins.TaskActor, {
         // Send a message saying the zombie grew an arm.
         Game.sendMessageNearby(this.getMap(),
             this.getX(), this.getY(), this.getZ(),
-            'An extra arm appears on the giant zombie!');
+            'На большом зомби появляется дополнительная рука!');
     },
     spawnSlime: function() {
         // Generate a random position nearby.
@@ -221,7 +248,7 @@ Game.EntityMixins.Attacker = {
         value = value || 2;
         // Add to the attack value.
         this._attackValue += value;
-        Game.sendMessage(this, "You look stronger!");
+        Game.sendMessage(this, "Вы стали сильнее!");
     },
     attack: function(target) {
         // If the target is destructible, calculate the damage
@@ -232,12 +259,13 @@ Game.EntityMixins.Attacker = {
             var max = Math.max(0, attack - defense);
             var damage = 1 + Math.floor(Math.random() * max);
 
-            Game.sendMessage(this, 'You strike the %s for %d damage!', 
+            Game.sendMessage(this, 'Вы наносите %s %d урона!', 
                 [target.getName(), damage]);
-            Game.sendMessage(target, 'The %s strikes you for %d damage!', 
+            Game.sendMessage(target, '%s наносит %d урона!', 
                 [this.getName(), damage]);
 
             target.takeDamage(this, damage);
+            Game.getAudio().play("hit");
         }
     },
     listeners: {
@@ -294,13 +322,13 @@ Game.EntityMixins.Destructible = {
         // Add to both max HP and HP.
         this._maxHp += value;
         this._hp += value;
-        Game.sendMessage(this, "You look healthier!");
+        Game.sendMessage(this, "Вы выглядите здоровее!");
     },
     takeDamage: function(attacker, damage) {
         this._hp -= damage;
         // If have 0 or less HP, then remove ourseles from the map
         if (this._hp <= 0) {
-            Game.sendMessage(attacker, 'You kill the %s!', [this.getName()]);
+            Game.sendMessage(attacker, 'Вы убили %s!', [this.getName()]);
             // Raise events
             this.raiseEvent('onDeath', attacker);
             attacker.raiseEvent('onKill', this);
@@ -333,7 +361,7 @@ Game.EntityMixins.MessageRecipient = {
         return this._messages;
     },
     clearMessages: function() {
-        this._messages = [];
+        if(this._messages.length > 8) this._messages.shift();
     }
 };
 
@@ -352,7 +380,7 @@ Game.EntityMixins.Sight = {
         value = value || 1;
         // Add to sight radius.
         this._sightRadius += value;
-        Game.sendMessage(this, "You are more aware of your surroundings!");
+        Game.sendMessage(this, "Теперь вы видите дальше!");
     },
     canSee: function(entity) {
         // If not on the same map or on different floors, then exit early
@@ -485,7 +513,7 @@ Game.EntityMixins.InventoryHolder = {
             if (this._map) {
                 this._map.addItem(this.getX(), this.getY(), this.getZ(), this._items[i]);
             }
-            this.removeItem(i);      
+            this.removeItem(i);
         }
     }
 };
@@ -506,9 +534,9 @@ Game.EntityMixins.FoodConsumer = {
     modifyFullnessBy: function(points) {
         this._fullness = this._fullness + points;
         if (this._fullness <= 0) {
-            this.kill("You have died of starvation!");
+            this.kill("Вы умерли от голода");
         } else if (this._fullness > this._maxFullness) {
-            this.kill("You choke and die!");
+            this.kill("Вы умерли от переедания!");
         }
     },
     getHungerState: function() {
@@ -516,19 +544,19 @@ Game.EntityMixins.FoodConsumer = {
         var perPercent = this._maxFullness / 100;
         // 5% of max fullness or less = starving
         if (this._fullness <= perPercent * 5) {
-            return 'Starving';
+            return 'Голодовка';
         // 25% of max fullness or less = hungry
         } else if (this._fullness <= perPercent * 25) {
-            return 'Hungry';
+            return 'Голоден';
         // 95% of max fullness or more = oversatiated
         } else if (this._fullness >= perPercent * 95) {
-            return 'Oversatiated';
+            return 'Обожрат';
         // 75% of max fullness or more = full
         } else if (this._fullness >= perPercent * 75) {
-            return 'Full';
+            return 'Сыт';
         // Anything else = not hungry
         } else {
-            return 'Not Hungry';
+            return 'Не голоден';
         }
     }
 };
@@ -546,10 +574,24 @@ Game.EntityMixins.CorpseDropper = {
                 // Create a new corpse item and drop it.
                 this._map.addItem(this.getX(), this.getY(), this.getZ(),
                     Game.ItemRepository.create('corpse', {
-                        name: this._name + ' corpse',
+                        name: 'труп ' + this._name,
                         foreground: this._foreground
                     }));
             }    
+        }
+    }
+};
+
+Game.EntityMixins.LootDropper = {
+    name: 'CorpseDropper',
+    listeners: {
+        onDeath: function(attacker) {
+            var il = this.getItems().length;
+            for (var i = 0; i < il; i++) {
+                if (this._items[i]) {
+                    this.dropItem(i);
+                }
+            }
         }
     }
 };
@@ -599,14 +641,14 @@ Game.EntityMixins.ExperienceGainer = {
         // Determine what stats can be levelled up.
         this._statOptions = [];
         if (this.hasMixin('Attacker')) {
-            this._statOptions.push(['Increase attack value', this.increaseAttackValue]);
+            this._statOptions.push(['атака', this.increaseAttackValue]);
         }
         if (this.hasMixin('Destructible')) {
-            this._statOptions.push(['Increase defense value', this.increaseDefenseValue]);   
-            this._statOptions.push(['Increase max health', this.increaseMaxHp]);
+            this._statOptions.push(['защита', this.increaseDefenseValue]);   
+            this._statOptions.push(['здоровье', this.increaseMaxHp]);
         }
         if (this.hasMixin('Sight')) {
-            this._statOptions.push(['Increase sight range', this.increaseSightRadius]);
+            this._statOptions.push(['дальность видимости', this.increaseSightRadius]);
         }
     },
     getLevel: function() {
@@ -651,7 +693,7 @@ Game.EntityMixins.ExperienceGainer = {
         }
         // Check if we gained at least one level.
         if (levelsGained > 0) {
-            Game.sendMessage(this, "You advance to level %d.", [this._level]);
+            Game.sendMessage(this, "Вы достигли %d уровня.", [this._level]);
             this.raiseEvent('onGainLevel');
         }
     },

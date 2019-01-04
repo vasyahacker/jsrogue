@@ -5,8 +5,8 @@ Game.Map.Cave = function(tiles, player) {
     this.addEntityAtRandomPosition(player, 0);
     // Add random entities and items to each floor.
     for (var z = 0; z < this._depth; z++) {
-        // 15 entities per floor
-        for (var i = 0; i < 15; i++) {
+        // 27 entities per floor
+        for (var i = 0; i < 27; i++) {
             var entity = Game.EntityRepository.createRandom();
             // Add a random entity
             this.addEntityAtRandomPosition(entity, z);
@@ -18,14 +18,14 @@ Game.Map.Cave = function(tiles, player) {
                 }
             }
         }
-        // 15 items per floor
-        for (var i = 0; i < 15; i++) {
+        // 18 items per floor
+        for (var i = 0; i < 18; i++) {
             // Add a random entity
             this.addItemAtRandomPosition(Game.ItemRepository.createRandom(), z);
         }
     }
     // Add weapons and armor to the map in random positions and floors
-    var templates = ['dagger', 'sword', 'staff', 
+    var templates = ['pickaxe', 'dagger', 'sword', 'staff', 
         'tunic', 'chainmail', 'platemail'];
     for (var i = 0; i < templates.length; i++) {
         this.addItemAtRandomPosition(Game.ItemRepository.create(templates[i]),

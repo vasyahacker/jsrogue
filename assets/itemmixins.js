@@ -23,7 +23,7 @@ Game.ItemMixins.Edible = {
     },
     describe: function() {
         if (this._maxConsumptions != this._remainingConsumptions) {
-            return 'partly eaten ' + Game.Item.prototype.describe.call(this);
+            return Game.Item.prototype.describe.call(this) +  ' (частично съедено)';
         } else {
             return this._name;
         }
@@ -69,3 +69,13 @@ Game.ItemMixins.Equippable = {
         }
     }
 };
+
+Game.ItemMixins.Diggeble = {
+    name: 'Diggeble',
+    init: function(template) {
+        this._digValue = template['digValue'] || 1;
+    },
+    getDigValue: function() {
+        return this._digValue;
+    }
+}

@@ -8,11 +8,17 @@ Game.Entity = function(properties) {
     this._z = properties['z'] || 0;
     this._map = null;
     this._alive = true;
+    // last action time
+    this._lat = Date.now();
     // Acting speed
     this._speed = properties['speed'] || 1000;
 };
 // Make entities inherit all the functionality from dynamic glyphs
 Game.Entity.extend(Game.DynamicGlyph);
+
+Game.Entity.prototype.setLAT = function(lat) {
+    this._lat = lat;
+};
 
 Game.Entity.prototype.setX = function(x) {
     this._x = x;
@@ -42,6 +48,10 @@ Game.Entity.prototype.setPosition = function(x, y, z) {
         this._map.updateEntityPosition(this, oldX, oldY, oldZ);
     }
 };
+Game.Entity.prototype.getLAT = function() {
+    return this._lat;
+};
+
 Game.Entity.prototype.getX = function() {
     return this._x;
 };
@@ -62,13 +72,16 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
     var map = this.getMap();
     // Must use starting z
     var tile = map.getTile(x, y, this.getZ());
-    var target = map.getEntityAt(x, y, this.getZ());
+    var target = map.getEntityAt(x, y, z);
     // If our z level changed, check if we are on stair
     if (z < this.getZ()) {
         if (tile != Game.Tile.stairsUpTile) {
-            Game.sendMessage(this, "You can't go up here!");
+            Game.sendMessage(this, "Здесь вы не можете подняться на верх!");
+        } else if(target){
+                Game.sendMessage(this, "Вы не можете подняться на верх, там кто-то стоит!");
+                return;
         } else {
-            Game.sendMessage(this, "You ascend to level %d!", [z + 1]);
+            Game.sendMessage(this, "Вы поднялись на уровень %d!", [z + 1]);
             this.setPosition(x, y, z);
         }
     } else if (z > this.getZ()) {
@@ -77,10 +90,13 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
             // Switch the entity to a boss cavern!
             this.switchMap(new Game.Map.BossCavern());
         } else if (tile != Game.Tile.stairsDownTile) {
-            Game.sendMessage(this, "You can't go down here!");
+            Game.sendMessage(this, "Здесь вы не можете спуститься вниз!");
+        } else if(target){
+                Game.sendMessage(this, "Вы не можете спуститься вниз, там кто-то стоит!");
+                return;
         } else {
             this.setPosition(x, y, z);
-            Game.sendMessage(this, "You descend to level %d!", [z + 1]);
+            Game.sendMessage(this, "Вы спустились на уровень %d!", [z + 1]);
         }
     // If an entity was present at the tile
     } else if (target) {
@@ -97,16 +113,16 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
         return false;        
     // Check if we can walk on the tile
     // and if so simply walk onto it
-    } else if (tile.isWalkable()) {        
+    } else if (tile.isWalkable()) {
         // Update the entity's position
         this.setPosition(x, y, z);
         // Notify the entity that there are items at this position
         var items = this.getMap().getItemsAt(x, y, z);
         if (items) {
             if (items.length === 1) {
-                Game.sendMessage(this, "You see %s.", [items[0].describeA()]);
+                Game.sendMessage(this, "Вы видите %s.", [items[0].describeA()]);
             } else {
-                Game.sendMessage(this, "There are several objects here.");
+                Game.sendMessage(this, "Здесь есть несколько объектов.");
             }
         }
         return true;
@@ -114,8 +130,14 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
     } else if (tile.isDiggable()) {
         // Only dig if the the entity is the player
         if (this.hasMixin(Game.EntityMixins.PlayerActor)) {
-            map.dig(x, y, z);
-            return true;
+            var w = this.getWeapon();
+            if(w != null && w.hasMixin(Game.ItemMixins.Diggeble)){
+                map.dig(x, y, z);
+                return true;
+            }else{
+                Game.sendMessage(this, "Вам надо взять в руки кирку чтобы рыть проход.");
+                return false;
+            }
         }
         // If not nothing we can do, but we can't 
         // move to the tile
@@ -135,7 +157,7 @@ Game.Entity.prototype.kill = function(message) {
     if (message) {
         Game.sendMessage(this, message);
     } else {
-        Game.sendMessage(this, "You have died!");
+        Game.sendMessage(this, "Вы умерли!");
     }
 
     // Check if the player died, and if so call their act method to prompt the user.
@@ -144,6 +166,9 @@ Game.Entity.prototype.kill = function(message) {
     } else {
         this.getMap().removeEntity(this);
     }
+};
+Game.Entity.prototype.rebirth = function() {
+    this._alive = true;
 };
 Game.Entity.prototype.switchMap = function(newMap) {
     // If it's the same map, nothing to do!

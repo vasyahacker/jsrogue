@@ -1,7 +1,7 @@
 Game.ItemRepository = new Game.Repository('items', Game.Item);
 
 Game.ItemRepository.define('apple', {
-    name: 'apple',
+    name: 'яблоко',
     character: '%',
     foreground: 'red',
     foodValue: 50,
@@ -9,7 +9,7 @@ Game.ItemRepository.define('apple', {
 });
 
 Game.ItemRepository.define('melon', {
-    name: 'melon',
+    name: 'дыня',
     character: '%',
     foreground: 'lightGreen',
     foodValue: 35,
@@ -18,7 +18,7 @@ Game.ItemRepository.define('melon', {
 });
 
 Game.ItemRepository.define('pumpkin', {
-    name: 'pumpkin',
+    name: 'тыква',
     character: '%',
     foreground: 'orange',
     foodValue: 50,
@@ -30,7 +30,7 @@ Game.ItemRepository.define('pumpkin', {
 });
 
 Game.ItemRepository.define('corpse', {
-    name: 'corpse',
+    name: 'труп',
     character: '%',
     foodValue: 75,
     consumptions: 1,
@@ -40,14 +40,14 @@ Game.ItemRepository.define('corpse', {
 });
 
 Game.ItemRepository.define('rock', {
-    name: 'rock',
+    name: 'камень',
     character: '*',
     foreground: 'white'
 });
 
 // Weapons
 Game.ItemRepository.define('dagger', {
-    name: 'dagger',
+    name: 'кинжал',
     character: ')',
     foreground: 'gray',
     attackValue: 5,
@@ -58,7 +58,7 @@ Game.ItemRepository.define('dagger', {
 });
 
 Game.ItemRepository.define('sword', {
-    name: 'sword',
+    name: 'меч',
     character: ')',
     foreground: 'white',
     attackValue: 10,
@@ -69,7 +69,7 @@ Game.ItemRepository.define('sword', {
 });
 
 Game.ItemRepository.define('staff', {
-    name: 'staff',
+    name: 'посох',
     character: ')',
     foreground: 'yellow',
     attackValue: 5,
@@ -80,9 +80,23 @@ Game.ItemRepository.define('staff', {
     disableRandomCreation: true
 });
 
+Game.ItemRepository.define('pickaxe', {
+    name: 'кирка',
+    character: 'т',
+    foreground: 'lightblue',
+    attackValue: 3,
+    defenseValue: 1,
+    digValue: 2,
+    wieldable: true,
+    mixins: [Game.ItemMixins.Equippable, Game.ItemMixins.Diggeble]
+}, {
+    disableRandomCreation: true
+});
+
+
 // Wearables
 Game.ItemRepository.define('tunic', {
-    name: 'tunic',
+    name: 'туника',
     character: '[',
     foreground: 'green',
     defenseValue: 2,
@@ -93,7 +107,7 @@ Game.ItemRepository.define('tunic', {
 });
 
 Game.ItemRepository.define('chainmail', {
-    name: 'chainmail',
+    name: 'кольчуга',
     character: '[',
     foreground: 'white',
     defenseValue: 4,
@@ -104,7 +118,7 @@ Game.ItemRepository.define('chainmail', {
 });
 
 Game.ItemRepository.define('platemail', {
-    name: 'platemail',
+    name: 'латы',
     character: '[',
     foreground: 'aliceblue',
     defenseValue: 6,

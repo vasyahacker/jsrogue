@@ -6,8 +6,8 @@ Game.Screen.startScreen = {
     exit: function() { console.log("Exited start screen."); },
     render: function(display) {
         // Render our prompt to the screen
-        display.drawText(1,1, "%c{yellow}Javascript Roguelike");
-        display.drawText(1,2, "Press [Enter] to start!");
+        display.drawText(1,1, "%c{yellow}Just Space Roguelike");
+        display.drawText(1,2, "Нажмите [Enter] для старта!");
     },
     handleInput: function(inputType, inputData) {
         // When [Enter] is pressed, go to the play screen
@@ -48,11 +48,48 @@ Game.Screen.playScreen = {
         var screenHeight = Game.getScreenHeight();
 
         // Render the tiles
-        this.renderTiles(display);
-
+        var referense = this.renderTiles(display);
+        // Render the referense
+        this.renderReference(Game.getScreenWidth(), referense, display);
+        // Render player stats
+        var stats = '%c{white}%b{black}';
+        stats += vsprintf('Жизнь: %d/%d Уровень: %d Опыт: %d Глубина: %d Атака: %d Защита: %d', 
+            [this._player.getHp(), this._player.getMaxHp(),
+             this._player.getLevel(), this._player.getExperience(),
+             this._player.getZ(), this._player.getAttackValue(),
+             this._player.getDefenseValue()]);
+        display.drawText(0, screenHeight, stats);
+        // Render hunger state
+        var hungerState = this._player.getHungerState();
+        display.drawText(screenWidth - hungerState.length, screenHeight, hungerState);
+        this.renderLog(screenHeight,display);
+    },
+    renderReference: function(fromX, referense, display) {
+        display.drawText(fromX, 0, "Вы видите:");
+        var y = 2;
+        for (var key in referense.entities){
+            var entity = referense.entities[key];
+            display.drawText(fromX, y,
+                String.format('%s - %s', entity.getRepresentation(), entity.describeA(true)));
+            y++;
+        }
+        for (var key in referense.items){
+            var item = referense.items[key];
+            display.drawText(fromX, y,
+                String.format('%s - %s', item.getRepresentation(), item.describeA(true)));
+            y++;
+        }
+        for (var key in referense.notExplored){
+            var tile = referense.notExplored[key];
+            display.drawText(fromX, y,
+                String.format('%s - %s', tile.getRepresentation(), tile.getDescription()));
+            y++;
+        }
+    },
+    renderLog: function(screenHeight,display){
         // Get the messages in the player's queue and render them
         var messages = this._player.getMessages();
-        var messageY = 0;
+        var messageY = screenHeight+1;
         for (var i = 0; i < messages.length; i++) {
             // Draw each message, adding the number of lines
             messageY += display.drawText(
@@ -61,15 +98,6 @@ Game.Screen.playScreen = {
                 '%c{white}%b{black}' + messages[i]
             );
         }
-        // Render player stats
-        var stats = '%c{white}%b{black}';
-        stats += vsprintf('HP: %d/%d L: %d XP: %d', 
-            [this._player.getHp(), this._player.getMaxHp(),
-             this._player.getLevel(), this._player.getExperience()]);
-        display.drawText(0, screenHeight, stats);
-        // Render hunger state
-        var hungerState = this._player.getHungerState();
-        display.drawText(screenWidth - hungerState.length, screenHeight, hungerState);
     },
     getScreenOffsets: function() {
         // Make sure we still have enough space to fit an entire game screen
@@ -94,6 +122,8 @@ Game.Screen.playScreen = {
         var topLeftY = offsets.y;
         // This object will keep track of all visible map cells
         var visibleCells = {};
+        // Arrays of glyphs for referense
+        var referense = { entities: {}, items: {}, notExplored: {} };
         // Store this._player.getMap() and player's z to prevent losing it in callbacks
         var map = this._player.getMap();
         var currentDepth = this._player.getZ();
@@ -116,17 +146,25 @@ Game.Screen.playScreen = {
                     var foreground = glyph.getForeground();
                     // If we are at a cell that is in the field of vision, we need
                     // to check if there are items or entities.
+                    var referenseKey = glyph.getChar() + foreground + glyph.getBackground();
                     if (visibleCells[x + ',' + y]) {
                         // Check for items first, since we want to draw entities
                         // over items.
                         var items = map.getItemsAt(x, y, currentDepth);
-                        // If we have items, we want to render the top most item
-                        if (items) {
-                            glyph = items[items.length - 1];
-                        }
-                        // Check if we have an entity at the position
                         if (map.getEntityAt(x, y, currentDepth)) {
+                        // Check if we have an entity at the position
                             glyph = map.getEntityAt(x, y, currentDepth);
+                            referenseKey = glyph.getChar() + glyph.getForeground()
+                                + glyph.getBackground();
+                            referense.entities[referenseKey] = glyph;
+                        } else if (items) {
+                        // If we have items, we want to render the top most item
+                            glyph = items[items.length - 1];
+                            referenseKey = glyph.getChar() + glyph.getForeground()
+                                + glyph.getBackground() + glyph.getName();
+                            referense.items[referenseKey] = glyph;
+                        } else {
+                            referense.notExplored[referenseKey] = glyph;
                         }
                         // Update the foreground color in case our glyph changed
                         foreground = glyph.getForeground();
@@ -139,18 +177,20 @@ Game.Screen.playScreen = {
                     display.draw(
                         x - topLeftX,
                         y - topLeftY,
-                        glyph.getChar(), 
-                        foreground, 
+                        glyph.getChar(),
+                        foreground,
                         glyph.getBackground());
                 }
             }
         }
+        return referense;
     },
     handleInput: function(inputType, inputData) {
         // If the game is over, enter will bring the user to the losing screen.
         if (this._gameEnded) {
             if (inputType === 'keydown' && inputData.keyCode === ROT.VK_RETURN) {
-                Game.switchScreen(Game.Screen.loseScreen);
+                this._player.rebirth();
+                //Game.switchScreen(Game.Screen.loseScreen);
             }
             // Return to make sure the user can't still play
             return;
@@ -162,59 +202,68 @@ Game.Screen.playScreen = {
         }
         if (inputType === 'keydown') {
             // Movement
-            if (inputData.keyCode === ROT.VK_LEFT) {
+            var key = inputData.keyCode;
+            if (key === ROT.VK_LEFT || key === ROT.VK_H) {
                 this.move(-1, 0, 0);
-            } else if (inputData.keyCode === ROT.VK_RIGHT) {
+            } else if ( key === ROT.VK_Y) {
+                this.move(-1, -1, 0);
+            } else if ( key === ROT.VK_U) {
+                this.move(1, -1, 0);
+            } else if ( key === ROT.VK_B) {
+                this.move(-1, 1, 0);
+            } else if ( key === ROT.VK_N) {
+                this.move(1, 1, 0);
+            } else if (key === ROT.VK_RIGHT || key === ROT.VK_L) {
                 this.move(1, 0, 0);
-            } else if (inputData.keyCode === ROT.VK_UP) {
+            } else if (key === ROT.VK_UP || key === ROT.VK_K) {
                 this.move(0, -1, 0);
-            } else if (inputData.keyCode === ROT.VK_DOWN) {
+            } else if (key === ROT.VK_DOWN || key === ROT.VK_J) {
                 this.move(0, 1, 0);
-            } else if (inputData.keyCode === ROT.VK_I) {
+            } else if (key === ROT.VK_I) {
                 // Show the inventory screen
                 this.showItemsSubScreen(Game.Screen.inventoryScreen, this._player.getItems(),
-                    'You are not carrying anything.');
+                    'У вас ничего нет с собой.');
                 return;
-            } else if (inputData.keyCode === ROT.VK_D) {
+            } else if (key === ROT.VK_D) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.dropScreen, this._player.getItems(),
-                    'You have nothing to drop.');
+                    'Вам нечего выбросить.');
                 return;
-            } else if (inputData.keyCode === ROT.VK_E) {
+            } else if (key === ROT.VK_E) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.eatScreen, this._player.getItems(),
-                   'You have nothing to eat.');
+                   'У вас нет еды.');
                 return;
-            } else if (inputData.keyCode === ROT.VK_W) {
+            } else if (key === ROT.VK_W) {
                 if (inputData.shiftKey) {
                     // Show the wear screen
                     this.showItemsSubScreen(Game.Screen.wearScreen, this._player.getItems(),
-                        'You have nothing to wear.');
+                        'Вам нечего надеть.');
                 } else {
                     // Show the wield screen
                     this.showItemsSubScreen(Game.Screen.wieldScreen, this._player.getItems(),
-                        'You have nothing to wield.');
+                        'Вам нечем сражаться');
                 }
                 return;
-            } else if (inputData.keyCode === ROT.VK_X) {
+            } else if (key === ROT.VK_X) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.examineScreen, this._player.getItems(),
-                   'You have nothing to examine.');
+                   'Увас ничего нет для осмотра.');
                 return;
-            } else if (inputData.keyCode === ROT.VK_COMMA) {
+            } else if (key === ROT.VK_COMMA || key === ROT.VK_G) {
                 var items = this._player.getMap().getItemsAt(this._player.getX(), 
                     this._player.getY(), this._player.getZ());
                 // If there is only one item, directly pick it up
                 if (items && items.length === 1) {
                     var item = items[0];
                     if (this._player.pickupItems([0])) {
-                        Game.sendMessage(this._player, "You pick up %s.", [item.describeA()]);
+                        Game.sendMessage(this._player, "Вы подняли %s.", [item.describeA()]);
                     } else {
-                        Game.sendMessage(this._player, "Your inventory is full! Nothing was picked up.");
+                        Game.sendMessage(this._player, "Ваш инвентарь полон. Ничего небыло поднято");
                     }
                 } else {
                     this.showItemsSubScreen(Game.Screen.pickupScreen, items,
-                        'There is nothing here to pick up.');
+                        'Тут ничего нет чтобы поднять.');
                 } 
             } else {
                 // Not a valid key
@@ -245,7 +294,7 @@ Game.Screen.playScreen = {
                 return;
             }
             // Unlock the engine
-            this._player.getMap().getEngine().unlock();
+            //this._player.getMap().getEngine().unlock();
         } 
     },
     move: function(dX, dY, dZ) {
@@ -253,7 +302,7 @@ Game.Screen.playScreen = {
         var newY = this._player.getY() + dY;
         var newZ = this._player.getZ() + dZ;
         // Try to move to the new cell
-        this._player.tryMove(newX, newY, newZ, this._player.getMap());
+        this._player.move(newX, newY, newZ, this._player.getMap());
     },
     setGameEnded: function(gameEnded) {
         this._gameEnded = gameEnded;
@@ -285,26 +334,26 @@ Game.Screen.winScreen = {
             var g = Math.round(Math.random() * 255);
             var b = Math.round(Math.random() * 255);
             var background = ROT.Color.toRGB([r, g, b]);
-            display.drawText(2, i + 1, "%b{" + background + "}You win!");
+            display.drawText(2, i + 1, "%b{" + background + "}Вы победили!");
         }
     },
     handleInput: function(inputType, inputData) {
-        // Nothing to do here      
+        // Nothing to do here
     }
 };
 
 // Define our winning screen
 Game.Screen.loseScreen = {
-    enter: function() {    console.log("Entered lose screen."); },
+    enter: function() { console.log("Entered lose screen."); },
     exit: function() { console.log("Exited lose screen."); },
     render: function(display) {
         // Render our prompt to the screen
         for (var i = 0; i < 22; i++) {
-            display.drawText(2, i + 1, "%b{red}You lose! :(");
+            display.drawText(2, i + 1, "%b{red}Вы проиграли! :(");
         }
     },
     handleInput: function(inputType, inputData) {
-        // Nothing to do here      
+        // Nothing to do here
     }
 };
 
@@ -351,7 +400,7 @@ Game.Screen.ItemListScreen.prototype.render = function(display) {
     display.drawText(0, 0, this._caption);
     // Render the no item row if enabled
     if (this._hasNoItemOption) {
-        display.drawText(0, 1, '0 - no item');
+        display.drawText(0, 1, '0 - ничего');
     }
     var row = 0;
     for (var i = 0; i < this._items.length; i++) {
@@ -366,9 +415,9 @@ Game.Screen.ItemListScreen.prototype.render = function(display) {
             // Check if the item is worn or wielded
             var suffix = '';
             if (this._items[i] === this._player.getArmor()) {
-                suffix = ' (wearing)';
+                suffix = ' (надето как броня)';
             } else if (this._items[i] === this._player.getWeapon()) {
-                suffix = ' (wielding)';
+                suffix = ' (надето как оружие)';
             }
             // Render at the correct row and add 2.
             display.drawText(0, 2 + row,  letter + ' ' + selectionState + ' ' +
@@ -433,26 +482,26 @@ Game.Screen.ItemListScreen.prototype.handleInput = function(inputType, inputData
 };
 
 Game.Screen.inventoryScreen = new Game.Screen.ItemListScreen({
-    caption: 'Inventory',
+    caption: 'Инвентарь',
     canSelect: false
 });
 
 Game.Screen.pickupScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the items you wish to pickup',
+    caption: 'Выберите предмет, который хотите поднять',
     canSelect: true,
     canSelectMultipleItems: true,
     ok: function(selectedItems) {
         // Try to pick up all items, messaging the player if they couldn't all be
         // picked up.
         if (!this._player.pickupItems(Object.keys(selectedItems))) {
-            Game.sendMessage(this._player, "Your inventory is full! Not all items were picked up.");
+            Game.sendMessage(this._player, "Ваш инвентарь полон. Ничего не поднято.");
         }
         return true;
     }
 });
 
 Game.Screen.dropScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the item you wish to drop',
+    caption: 'Выберите предмет чтобы бросить.',
     canSelect: true,
     canSelectMultipleItems: false,
     ok: function(selectedItems) {
@@ -463,7 +512,7 @@ Game.Screen.dropScreen = new Game.Screen.ItemListScreen({
 });
 
 Game.Screen.eatScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the item you wish to eat',
+    caption: 'Что выхотите съесть?',
     canSelect: true,
     canSelectMultipleItems: false,
     isAcceptable: function(item) {
@@ -473,7 +522,7 @@ Game.Screen.eatScreen = new Game.Screen.ItemListScreen({
         // Eat the item, removing it if there are no consumptions remaining.
         var key = Object.keys(selectedItems)[0];
         var item = selectedItems[key];
-        Game.sendMessage(this._player, "You eat %s.", [item.describeThe()]);
+        Game.sendMessage(this._player, "Вы съели %s.", [item.describeThe()]);
         item.eat(this._player);
         if (!item.hasRemainingConsumptions()) {
             this._player.removeItem(key);
@@ -483,7 +532,7 @@ Game.Screen.eatScreen = new Game.Screen.ItemListScreen({
 });
 
 Game.Screen.wieldScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the item you wish to wield',
+    caption: 'Выберите предмет который хотите надеть',
     canSelect: true,
     canSelectMultipleItems: false,
     hasNoItemOption: true,
@@ -495,20 +544,20 @@ Game.Screen.wieldScreen = new Game.Screen.ItemListScreen({
         var keys = Object.keys(selectedItems);
         if (keys.length === 0) {
             this._player.unwield();
-            Game.sendMessage(this._player, "You are empty handed.")
+            Game.sendMessage(this._player, "У вас нет ничего в руках.")
         } else {
             // Make sure to unequip the item first in case it is the armor.
             var item = selectedItems[keys[0]];
             this._player.unequip(item);
             this._player.wield(item);
-            Game.sendMessage(this._player, "You are wielding %s.", [item.describeA()]);
+            Game.sendMessage(this._player, "Вы надели %s.", [item.describeA()]);
         }
         return true;
     }
 });
 
 Game.Screen.wearScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the item you wish to wear',
+    caption: 'Выберите предмет для экиперовки',
     canSelect: true,
     canSelectMultipleItems: false,
     hasNoItemOption: true,
@@ -520,20 +569,20 @@ Game.Screen.wearScreen = new Game.Screen.ItemListScreen({
         var keys = Object.keys(selectedItems);
         if (keys.length === 0) {
             this._player.unwield();
-            Game.sendMessage(this._player, "You are not wearing anthing.")
+            Game.sendMessage(this._player, "Вам нечего надеть.")
         } else {
             // Make sure to unequip the item first in case it is the weapon.
             var item = selectedItems[keys[0]];
             this._player.unequip(item);
             this._player.wear(item);
-            Game.sendMessage(this._player, "You are wearing %s.", [item.describeA()]);
+            Game.sendMessage(this._player, "Вы вооружились %s.", [item.describeA()]);
         }
         return true;
     }
 });
 
 Game.Screen.examineScreen = new Game.Screen.ItemListScreen({
-    caption: 'Choose the item you wish to examine',
+    caption: 'Выберите предмет чтобы осмотреть',
     canSelect: true,
     canSelectMultipleItems: false,
     isAcceptable: function(item) {
@@ -543,7 +592,7 @@ Game.Screen.examineScreen = new Game.Screen.ItemListScreen({
         var keys = Object.keys(selectedItems);
         if (keys.length > 0) {
             var item = selectedItems[keys[0]];
-            Game.sendMessage(this._player, "It's %s (%s).", 
+            Game.sendMessage(this._player, "Это %s (%s).", 
                 [
                     item.describeA(false),
                     item.details()
@@ -561,7 +610,7 @@ Game.Screen.gainStatScreen = {
     },
     render: function(display) {
         var letters = 'abcdefghijklmnopqrstuvwxyz';
-        display.drawText(0, 0, 'Choose a stat to increase: ');
+        display.drawText(0, 0, 'Выберите параметр для увеличения: ');
 
         // Iterate through each of our options
         for (var i = 0; i < this._options.length; i++) {
@@ -571,7 +620,7 @@ Game.Screen.gainStatScreen = {
 
         // Render remaining stat points
         display.drawText(0, 4 + this._options.length,
-            "Remaining points: " + this._entity.getStatPoints());   
+            "Осталось очков: " + this._entity.getStatPoints());   
     },
     handleInput: function(inputType, inputData) {
         if (inputType === 'keydown') {
@@ -727,68 +776,27 @@ Game.Screen.lookScreen = new Game.Screen.TargetBasedScreen({
     }
 });
 
-Game.Screen.lookScreen = new Game.Screen.TargetBasedScreen({
-    captionFunction: function(x, y) {
-        var z = this._player.getZ();
-        var map = this._player.getMap();
-        // If the tile is explored, we can give a better capton
-        if (map.isExplored(x, y, z)) {
-            // If the tile isn't explored, we have to check if we can actually 
-            // see it before testing if there's an entity or item.
-            if (this._visibleCells[x + ',' + y]) {
-                var items = map.getItemsAt(x, y, z);
-                // If we have items, we want to render the top most item
-                if (items) {
-                    var item = items[items.length - 1];
-                    return String.format('%s - %s (%s)',
-                        item.getRepresentation(),
-                        item.describeA(true),
-                        item.details());
-                // Else check if there's an entity
-                } else if (map.getEntityAt(x, y, z)) {
-                    var entity = map.getEntityAt(x, y, z);
-                    return String.format('%s - %s (%s)',
-                        entity.getRepresentation(),
-                        entity.describeA(true),
-                        entity.details());
-                }
-            }
-            // If there was no entity/item or the tile wasn't visible, then use
-            // the tile information.
-            return String.format('%s - %s',
-                map.getTile(x, y, z).getRepresentation(),
-                map.getTile(x, y, z).getDescription());
-
-        } else {
-            // If the tile is not explored, show the null tile description.
-            return String.format('%s - %s',
-                Game.Tile.nullTile.getRepresentation(),
-                Game.Tile.nullTile.getDescription());
-        }
-    }
-});
-
 // Define our help screen
 Game.Screen.helpScreen = {
     render: function(display) {
-        var text = 'jsrogue help';
-        var border = '-------------';
+        var text =   'Справка';
+        var border = '-------';
         var y = 0;
         display.drawText(Game.getScreenWidth() / 2 - text.length / 2, y++, text);
         display.drawText(Game.getScreenWidth() / 2 - text.length / 2, y++, border);
-        display.drawText(0, y++, 'The villagers have been complaining of a terrible stench coming from the cave.');
-        display.drawText(0, y++, 'Find the source of this smell and get rid of it!');
+        display.drawText(0, y++, 'Жители деревни жалуются на ужасную вонь, исходящую из пещеры.');
+        display.drawText(0, y++, 'Найдите источник этого запаха и избавьтесь от него!');
         y += 3;
-        display.drawText(0, y++, '[,] to pick up items');
-        display.drawText(0, y++, '[d] to drop items');
-        display.drawText(0, y++, '[e] to eat items');
-        display.drawText(0, y++, '[w] to wield items');
-        display.drawText(0, y++, '[W] to wield items');
-        display.drawText(0, y++, '[x] to examine items');
-        display.drawText(0, y++, '[;] to look around you');
-        display.drawText(0, y++, '[?] to show this help screen');
+        display.drawText(0, y++, '[,] поднять');
+        display.drawText(0, y++, '[d] выбросить');
+        display.drawText(0, y++, '[e] есть');
+        display.drawText(0, y++, '[W] одеть');
+        display.drawText(0, y++, '[w] вооружиться');
+        display.drawText(0, y++, '[x] осмотреть');
+        display.drawText(0, y++, '[;] осмотреться');
+        display.drawText(0, y++, '[?] эта справка');
         y += 3;
-        text = '--- press any key to continue ---';
+        text = '--- нажмите любую клавишу для продолжения ---';
         display.drawText(Game.getScreenWidth() / 2 - text.length / 2, y++, text);
     },
     handleInput: function(inputType, inputData) {

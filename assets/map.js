@@ -12,8 +12,9 @@ Game.Map = function(tiles) {
     // Create a table which will hold the items
     this._items = {};
     // Create the engine and scheduler
-    this._scheduler = new ROT.Scheduler.Speed();
-    this._engine = new ROT.Engine(this._scheduler);
+    this._scheduler = new ROT.Scheduler.Simple();
+    this._engine = new Game.RTEngine(this._scheduler);
+    // this._engine = new ROT.Engine(this._scheduler);
     // Setup the explored array
     this._explored = new Array(this._depth);
     this._setupExploredArray();
@@ -207,6 +208,7 @@ Game.Map.prototype.updateEntityPosition = function(
     var key = entity.getX() + ',' + entity.getY() + ',' + entity.getZ();
     if (this._entities[key]) {
         throw new Error('Tried to add an entity at an occupied position.');
+        return;
     }
     // Add the entity to the table of entities
     this._entities[key] = entity;

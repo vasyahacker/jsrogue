@@ -3,10 +3,15 @@ var Game =  {
     _currentScreen: null,
     _screenWidth: 80,
     _screenHeight: 24,
+    _referenseWidth: 27,
+    _logHeight: 9,
+    _audio: null,
 	init: function() {
         // Any necessary initialization will go here.
-        this._display = new ROT.Display({width: this._screenWidth,
-                                         height: this._screenHeight + 1});
+        this._display = new ROT.Display({width: this._screenWidth + this._referenseWidth,
+                                         height: this._screenHeight + this._logHeight});
+        // Create audio manager
+        this._audio = new Game.Audio();
         // Create a helper function for binding to an event
         // and making it send it to the screen
         var game = this; // So that we don't lose this
@@ -29,10 +34,13 @@ var Game =  {
 		return this._display;
 	},
 	getScreenWidth: function() {
-    return this._screenWidth;
+        return this._screenWidth;
 	},
-	getScreenHeight: function() {
-	    return this._screenHeight;
+    getScreenHeight: function() {
+        return this._screenHeight;
+    },
+	getAudio: function() {
+	    return this._audio;
 	},
     refresh: function() {
         // Clear the screen
@@ -66,6 +74,8 @@ window.onload = function() {
         Game.init();
         // Add the container to our HTML page
         document.body.appendChild(Game.getDisplay().getContainer());
+        var ctx = Game.getDisplay().getContainer().getContext("2d");
+        //ctx.font = "14px Menlo";
         // Load the start screen
         Game.switchScreen(Game.Screen.startScreen);
     }
