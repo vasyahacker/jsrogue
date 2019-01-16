@@ -81,7 +81,7 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
                 Game.sendMessage(this, "Вы не можете подняться на верх, там кто-то стоит!");
                 return;
         } else {
-            Game.sendMessage(this, "Вы поднялись на уровень %d!", [z + 1]);
+            Game.sendMessage(this, "Вы поднялись на уровень %s!", [z + 1]);
             this.setPosition(x, y, z);
         }
     } else if (z > this.getZ()) {
@@ -96,7 +96,7 @@ Game.Entity.prototype.tryMove = function(x, y, z, map) {
                 return;
         } else {
             this.setPosition(x, y, z);
-            Game.sendMessage(this, "Вы спустились на уровень %d!", [z + 1]);
+            Game.sendMessage(this, "Вы спустились на уровень %s!", [z + 1]);
         }
     // If an entity was present at the tile
     } else if (target) {

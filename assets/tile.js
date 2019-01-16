@@ -81,5 +81,5 @@ Game.getNeighborPositions = function(x, y) {
             tiles.push({x: x + dX, y: y + dY});
         }
     }
-    return tiles.randomize();
+    return ROT.RNG.shuffle(tiles);
 };

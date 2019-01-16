@@ -38,5 +38,5 @@ Game.Repository.prototype.create = function(name, extraProperties) {
 // Create an object based on a random template
 Game.Repository.prototype.createRandom = function() {
     // Pick a random key and create an object based off of it.
-    return this.create(Object.keys(this._randomTemplates).random());
+    return this.create(ROT.RNG.getItem(Object.keys(this._randomTemplates)));
 };

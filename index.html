@@ -9,8 +9,7 @@
         </style>
     </head>
     <body>
-        <script src="assets/rot.min.js"></script>
-        <script src="assets/sprintf.min.js"></script>
+        <script src="assets/rot.js"></script>
         <script src="assets/game.js"></script>
         <script src="assets/rtengine.js"></script>
         <script src="assets/utilities.js"></script>
@@ -33,19 +32,14 @@
         <script src="assets/maps/bosscavern.js"></script>
         <script type="text/javascript">
             window.onload = function() {
-                // Check if rot.js can work on this browser
-                if (!ROT.isSupported()) {
-                    alert("The rot.js library isn't supported by your browser.");
-                } else {
-                    // Initialize the game
-                    Game.init();
-                    // Add the container to our HTML page
-                    document.body.appendChild(Game.getDisplay().getContainer());
-                    //var ctx = Game.getDisplay().getContainer().getContext("2d");
-                    //ctx.font = "14px Menlo";
-                    // Load the start screen
-                    Game.switchScreen(Game.Screen.startScreen);
-                }
+                // Initialize the game
+                Game.init();
+                // Add the container to our HTML page
+                document.body.appendChild(Game.getDisplay().getContainer());
+                //var ctx = Game.getDisplay().getContainer().getContext("2d");
+                //ctx.font = "14px Menlo";
+                // Load the start screen
+                Game.switchScreen(Game.Screen.startScreen);
             };
         </script>
     </body>

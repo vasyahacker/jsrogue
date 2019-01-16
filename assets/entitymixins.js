@@ -259,9 +259,9 @@ Game.EntityMixins.Attacker = {
             var max = Math.max(0, attack - defense);
             var damage = 1 + Math.floor(Math.random() * max);
 
-            Game.sendMessage(this, 'Вы наносите %s %d урона!', 
+            Game.sendMessage(this, 'Вы наносите %s %s урона!', 
                 [target.getName(), damage]);
-            Game.sendMessage(target, '%s наносит %d урона!', 
+            Game.sendMessage(target, '%s наносит %s урона!', 
                 [this.getName(), damage]);
 
             target.takeDamage(this, damage);
@@ -314,7 +314,7 @@ Game.EntityMixins.Destructible = {
         value = value || 2;
         // Add to the defense value.
         this._defenseValue += value;
-        Game.sendMessage(this, "You look tougher!");
+        Game.sendMessage(this, "Вы выглядите более защищенным!");
     },
     increaseMaxHp: function(value) {
         // If no value was passed, default to 10.
@@ -421,7 +421,8 @@ Game.sendMessage = function(recipient, message, args) {
         // If args were passed, then we format the message, else
         // no formatting is necessary
         if (args) {
-            message = vsprintf(message, args);
+            message = ROT.Util.format(message,
+                args[0], args[1], args[2], args[3], args[4], args[5], args[7], args[6]); // fix this
         }
         recipient.receiveMessage(message);
     }
@@ -430,7 +431,8 @@ Game.sendMessageNearby = function(map, centerX, centerY, centerZ, message, args)
     // If args were passed, then we format the message, else
     // no formatting is necessary
     if (args) {
-        message = vsprintf(message, args);
+        message = ROT.Util.format(message, 
+            args[0], args[1], args[2], args[3], args[4], args[5], args[7], args[6]); // fix this
     }
     // Get the nearby entities
     entities = map.getEntitiesWithinRadius(centerX, centerY, centerZ, 5);
@@ -693,7 +695,7 @@ Game.EntityMixins.ExperienceGainer = {
         }
         // Check if we gained at least one level.
         if (levelsGained > 0) {
-            Game.sendMessage(this, "Вы достигли %d уровня.", [this._level]);
+            Game.sendMessage(this, "Вы достигли %s уровня.", [this._level]);
             this.raiseEvent('onGainLevel');
         }
     },
@@ -728,7 +730,7 @@ Game.EntityMixins.RandomStatGainer = {
             // stat point.
             while (this.getStatPoints() > 0) {
                 // Call the stat increasing function with this as the context.
-                statOptions.random()[1].call(this);
+                ROT.RNG.getItem(statOptions)[1].call(this);
                 this.setStatPoints(this.getStatPoints() - 1);
             }
         }

@@ -12,7 +12,7 @@ Game.Screen.startScreen = {
     handleInput: function(inputType, inputData) {
         // When [Enter] is pressed, go to the play screen
         if (inputType === 'keydown') {
-            if (inputData.keyCode === ROT.VK_RETURN) {
+            if (inputData.keyCode === ROT.KEYS.VK_RETURN) {
                 Game.switchScreen(Game.Screen.playScreen);
             }
         }
@@ -55,11 +55,12 @@ Game.Screen.playScreen = {
         var stats = '%c{white}%b{black}';
         var screenWidth = Game.getScreenWidth();
         var screenHeight = Game.getScreenHeight();
-        stats += vsprintf('Жизнь: %d/%d Уровень: %d Опыт: %d Глубина: %d Атака: %d Защита: %d', 
-            [this._player.getHp(), this._player.getMaxHp(),
-             this._player.getLevel(), this._player.getExperience(),
-             this._player.getZ(), this._player.getAttackValue(),
-             this._player.getDefenseValue()]);
+        stats += ROT.Util.format(
+            'Жизнь: %s/%s Уровень: %s Опыт: %s Глубина: %s Атака: %s Защита: %s', 
+            this._player.getHp(), this._player.getMaxHp(),
+            this._player.getLevel(), this._player.getExperience(),
+            this._player.getZ(), this._player.getAttackValue(),
+            this._player.getDefenseValue());
         display.drawText(0, screenHeight, stats);
         // Render hunger state
         var hungerState = this._player.getHungerState();
@@ -72,19 +73,19 @@ Game.Screen.playScreen = {
         for (var key in referense.entities){
             var entity = referense.entities[key];
             display.drawText(fromX, y,
-                String.format('%s - %s', entity.getRepresentation(), entity.describeA(true)));
+                ROT.Util.format('%s - %s', entity.getRepresentation(), entity.describeA(true)));
             y++;
         }
         for (var key in referense.items){
             var item = referense.items[key];
             display.drawText(fromX, y,
-                String.format('%s - %s', item.getRepresentation(), item.describeA(true)));
+                ROT.Util.format('%s - %s', item.getRepresentation(), item.describeA(true)));
             y++;
         }
         for (var key in referense.notExplored){
             var tile = referense.notExplored[key];
             display.drawText(fromX, y,
-                String.format('%s - %s', tile.getRepresentation(), tile.getDescription()));
+                ROT.Util.format('%s - %s', tile.getRepresentation(), tile.getDescription()));
             y++;
         }
     },
@@ -191,7 +192,7 @@ Game.Screen.playScreen = {
     handleInput: function(inputType, inputData) {
         // If the game is over, enter will bring the user to the losing screen.
         if (this._gameEnded) {
-            if (inputType === 'keydown' && inputData.keyCode === ROT.VK_RETURN) {
+            if (inputType === 'keydown' && inputData.keyCode === ROT.KEYS.VK_RETURN) {
                 this._player.rebirth();
                 //Game.switchScreen(Game.Screen.loseScreen);
             }
@@ -206,38 +207,38 @@ Game.Screen.playScreen = {
         if (inputType === 'keydown') {
             // Movement
             var key = inputData.keyCode;
-            if (key === ROT.VK_LEFT || key === ROT.VK_H) {
+            if (key === ROT.KEYS.VK_LEFT || key === ROT.KEYS.VK_H) {
                 this.move(-1, 0, 0);
-            } else if ( key === ROT.VK_Y) {
+            } else if ( key === ROT.KEYS.VK_Y) {
                 this.move(-1, -1, 0);
-            } else if ( key === ROT.VK_U) {
+            } else if ( key === ROT.KEYS.VK_U) {
                 this.move(1, -1, 0);
-            } else if ( key === ROT.VK_B) {
+            } else if ( key === ROT.KEYS.VK_B) {
                 this.move(-1, 1, 0);
-            } else if ( key === ROT.VK_N) {
+            } else if ( key === ROT.KEYS.VK_N) {
                 this.move(1, 1, 0);
-            } else if (key === ROT.VK_RIGHT || key === ROT.VK_L) {
+            } else if (key === ROT.KEYS.VK_RIGHT || key === ROT.KEYS.VK_L) {
                 this.move(1, 0, 0);
-            } else if (key === ROT.VK_UP || key === ROT.VK_K) {
+            } else if (key === ROT.KEYS.VK_UP || key === ROT.KEYS.VK_K) {
                 this.move(0, -1, 0);
-            } else if (key === ROT.VK_DOWN || key === ROT.VK_J) {
+            } else if (key === ROT.KEYS.VK_DOWN || key === ROT.KEYS.VK_J) {
                 this.move(0, 1, 0);
-            } else if (key === ROT.VK_I) {
+            } else if (key === ROT.KEYS.VK_I) {
                 // Show the inventory screen
                 this.showItemsSubScreen(Game.Screen.inventoryScreen, this._player.getItems(),
                     'У вас ничего нет с собой.');
                 return;
-            } else if (key === ROT.VK_D) {
+            } else if (key === ROT.KEYS.VK_D) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.dropScreen, this._player.getItems(),
                     'Вам нечего выбросить.');
                 return;
-            } else if (key === ROT.VK_E) {
+            } else if (key === ROT.KEYS.VK_E) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.eatScreen, this._player.getItems(),
                    'У вас нет еды.');
                 return;
-            } else if (key === ROT.VK_W) {
+            } else if (key === ROT.KEYS.VK_W) {
                 if (inputData.shiftKey) {
                     // Show the wear screen
                     this.showItemsSubScreen(Game.Screen.wearScreen, this._player.getItems(),
@@ -248,12 +249,12 @@ Game.Screen.playScreen = {
                         'Вам нечем сражаться');
                 }
                 return;
-            } else if (key === ROT.VK_X) {
+            } else if (key === ROT.KEYS.VK_X) {
                 // Show the drop screen
                 this.showItemsSubScreen(Game.Screen.examineScreen, this._player.getItems(),
                    'Увас ничего нет для осмотра.');
                 return;
-            } else if (key === ROT.VK_COMMA || key === ROT.VK_G) {
+            } else if (key === ROT.KEYS.VK_COMMA || key === ROT.KEYS.VK_G) {
                 var items = this._player.getMap().getItemsAt(this._player.getX(), 
                     this._player.getY(), this._player.getZ());
                 // If there is only one item, directly pick it up
@@ -447,23 +448,23 @@ Game.Screen.ItemListScreen.prototype.handleInput = function(inputType, inputData
     if (inputType === 'keydown') {
         // If the user hit escape, hit enter and can't select an item, or hit
         // enter without any items selected, simply cancel out
-        if (inputData.keyCode === ROT.VK_ESCAPE || 
-            (inputData.keyCode === ROT.VK_RETURN && 
+        if (inputData.keyCode === ROT.KEYS.VK_ESCAPE || 
+            (inputData.keyCode === ROT.KEYS.VK_RETURN && 
                 (!this._canSelectItem || Object.keys(this._selectedIndices).length === 0))) {
             Game.Screen.playScreen.setSubScreen(undefined);
         // Handle pressing return when items are selected
-        } else if (inputData.keyCode === ROT.VK_RETURN) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_RETURN) {
             this.executeOkFunction();
         // Handle pressing zero when 'no item' selection is enabled
-        } else if (this._canSelectItem && this._hasNoItemOption && inputData.keyCode === ROT.VK_0) {
+        } else if (this._canSelectItem && this._hasNoItemOption && inputData.keyCode === ROT.KEYS.VK_0) {
             this._selectedIndices = {};
             this.executeOkFunction();
         // Handle pressing a letter if we can select
-        } else if (this._canSelectItem && inputData.keyCode >= ROT.VK_A &&
-            inputData.keyCode <= ROT.VK_Z) {
+        } else if (this._canSelectItem && inputData.keyCode >= ROT.KEYS.VK_A &&
+            inputData.keyCode <= ROT.KEYS.VK_Z) {
             // Check if it maps to a valid item by subtracting 'a' from the character
             // to know what letter of the alphabet we used.
-            var index = inputData.keyCode - ROT.VK_A;
+            var index = inputData.keyCode - ROT.KEYS.VK_A;
             if (this._items[index]) {
                 // If multiple selection is allowed, toggle the selection status, else
                 // select the item and exit the screen
@@ -628,10 +629,10 @@ Game.Screen.gainStatScreen = {
     handleInput: function(inputType, inputData) {
         if (inputType === 'keydown') {
             // If a letter was pressed, check if it matches to a valid option.
-            if (inputData.keyCode >= ROT.VK_A && inputData.keyCode <= ROT.VK_Z) {
+            if (inputData.keyCode >= ROT.KEYS.VK_A && inputData.keyCode <= ROT.KEYS.VK_Z) {
                 // Check if it maps to a valid item by subtracting 'a' from the character
                 // to know what letter of the alphabet we used.
-                var index = inputData.keyCode - ROT.VK_A;
+                var index = inputData.keyCode - ROT.KEYS.VK_A;
                 if (this._options[index]) {
                     // Call the stat increasing function
                     this._options[index][1].call(this._entity);
@@ -705,17 +706,17 @@ Game.Screen.TargetBasedScreen.prototype.render = function(display) {
 Game.Screen.TargetBasedScreen.prototype.handleInput = function(inputType, inputData) {
     // Move the cursor
     if (inputType == 'keydown') {
-        if (inputData.keyCode === ROT.VK_LEFT) {
+        if (inputData.keyCode === ROT.KEYS.VK_LEFT) {
             this.moveCursor(-1, 0);
-        } else if (inputData.keyCode === ROT.VK_RIGHT) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_RIGHT) {
             this.moveCursor(1, 0);
-        } else if (inputData.keyCode === ROT.VK_UP) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_UP) {
             this.moveCursor(0, -1);
-        } else if (inputData.keyCode === ROT.VK_DOWN) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_DOWN) {
             this.moveCursor(0, 1);
-        } else if (inputData.keyCode === ROT.VK_ESCAPE) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_ESCAPE) {
             Game.Screen.playScreen.setSubScreen(undefined);
-        } else if (inputData.keyCode === ROT.VK_RETURN) {
+        } else if (inputData.keyCode === ROT.KEYS.VK_RETURN) {
             this.executeOkFunction();
         }
     }
@@ -751,14 +752,14 @@ Game.Screen.lookScreen = new Game.Screen.TargetBasedScreen({
                 // If we have items, we want to render the top most item
                 if (items) {
                     var item = items[items.length - 1];
-                    return String.format('%s - %s (%s)',
+                    return ROT.Util.format('%s - %s (%s)',
                         item.getRepresentation(),
                         item.describeA(true),
                         item.details());
                 // Else check if there's an entity
                 } else if (map.getEntityAt(x, y, z)) {
                     var entity = map.getEntityAt(x, y, z);
-                    return String.format('%s - %s (%s)',
+                    return ROT.Util.format('%s - %s (%s)',
                         entity.getRepresentation(),
                         entity.describeA(true),
                         entity.details());
@@ -766,13 +767,13 @@ Game.Screen.lookScreen = new Game.Screen.TargetBasedScreen({
             }
             // If there was no entity/item or the tile wasn't visible, then use
             // the tile information.
-            return String.format('%s - %s',
+            return ROT.Util.format('%s - %s',
                 map.getTile(x, y, z).getRepresentation(),
                 map.getTile(x, y, z).getDescription());
 
         } else {
             // If the tile is not explored, show the null tile description.
-            return String.format('%s - %s',
+            return ROT.Util.format('%s - %s',
                 Game.Tile.nullTile.getRepresentation(),
                 Game.Tile.nullTile.getDescription());
         }

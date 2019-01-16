@@ -159,7 +159,7 @@ Game.Builder.prototype._findRegionOverlaps = function(z, r1, r2) {
         }
     }
     // We shuffle the list of matches to prevent bias
-    return matches.randomize();
+    return ROT.RNG.shuffle(matches);
 };
 
 // This tries to connect two regions by calculating 

@@ -8,8 +8,11 @@ var Game =  {
     _audio: null,
 	init: function() {
         // Any necessary initialization will go here.
-        this._display = new ROT.Display({width: this._screenWidth + this._referenseWidth,
-                                         height: this._screenHeight + this._logHeight});
+        this._display = new ROT.Display({
+            width: this._screenWidth + this._referenseWidth,
+            height: this._screenHeight + this._logHeight,
+            fontSize: 18
+        });
         // Create audio manager
         this._audio = new Game.Audio();
         // Create a helper function for binding to an event

@@ -27,7 +27,7 @@ Game.Audio.prototype.play = function(name) {
 	if (!this._supported) { return; }
 	var data = this._effects[name];
 	if (!data) { return; }
-	data.audio.random().play();
+	ROT.RNG.getItem(data.audio).play();
 }
 
 Game.Audio.prototype._expandName = function(name) {
