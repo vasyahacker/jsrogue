@@ -64,19 +64,3 @@ var Game =  {
         }
     }
 };
-
-window.onload = function() {
-    // Check if rot.js can work on this browser
-    if (!ROT.isSupported()) {
-        alert("The rot.js library isn't supported by your browser.");
-    } else {
-        // Initialize the game
-        Game.init();
-        // Add the container to our HTML page
-        document.body.appendChild(Game.getDisplay().getContainer());
-        //var ctx = Game.getDisplay().getContainer().getContext("2d");
-        //ctx.font = "14px Menlo";
-        // Load the start screen
-        Game.switchScreen(Game.Screen.startScreen);
-    }
-};
