@@ -74,7 +74,7 @@ window.onload = function() {
         Game.init();
         // Add the container to our HTML page
         document.body.appendChild(Game.getDisplay().getContainer());
-        var ctx = Game.getDisplay().getContainer().getContext("2d");
+        //var ctx = Game.getDisplay().getContainer().getContext("2d");
         //ctx.font = "14px Menlo";
         // Load the start screen
         Game.switchScreen(Game.Screen.startScreen);

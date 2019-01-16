@@ -43,16 +43,18 @@ Game.Screen.playScreen = {
             this._subScreen.render(display);
             return;
         }
-
-        var screenWidth = Game.getScreenWidth();
-        var screenHeight = Game.getScreenHeight();
-
         // Render the tiles
         var referense = this.renderTiles(display);
         // Render the referense
-        this.renderReference(Game.getScreenWidth(), referense, display);
+        this.renderReference(referense, display);
         // Render player stats
+        this.renderStats(display);
+        this.renderLog(display);
+    },
+    renderStats: function(display){
         var stats = '%c{white}%b{black}';
+        var screenWidth = Game.getScreenWidth();
+        var screenHeight = Game.getScreenHeight();
         stats += vsprintf('Жизнь: %d/%d Уровень: %d Опыт: %d Глубина: %d Атака: %d Защита: %d', 
             [this._player.getHp(), this._player.getMaxHp(),
              this._player.getLevel(), this._player.getExperience(),
@@ -62,9 +64,9 @@ Game.Screen.playScreen = {
         // Render hunger state
         var hungerState = this._player.getHungerState();
         display.drawText(screenWidth - hungerState.length, screenHeight, hungerState);
-        this.renderLog(screenHeight,display);
     },
-    renderReference: function(fromX, referense, display) {
+    renderReference: function(referense, display) {
+        var fromX = Game.getScreenWidth();
         display.drawText(fromX, 0, "Вы видите:");
         var y = 2;
         for (var key in referense.entities){
@@ -86,7 +88,8 @@ Game.Screen.playScreen = {
             y++;
         }
     },
-    renderLog: function(screenHeight,display){
+    renderLog: function(display){
+        var screenHeight = Game.getScreenHeight();
         // Get the messages in the player's queue and render them
         var messages = this._player.getMessages();
         var messageY = screenHeight+1;
